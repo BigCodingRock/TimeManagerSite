@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time's Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d0d14;
+      --surface: #13131f;
+      --border:  #1e1e30;
+      --accent:  #7c6af7;
+      --accent2: #c084fc;
+      --text:    #e2e1f5;
+      --muted:   #6b6994;
+      --danger:  #f87171;
+      --good:    #86efac;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 30% 20%, rgba(124,106,247,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(192,132,252,.07) 0%, transparent 60%);
+    }
+
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .6;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 60h60M60 0v60' stroke='%231e1e30' stroke-width='.5'/%3E%3C/svg%3E");
+    }
+
+    .page { position: relative; z-index: 1; min-height: 100vh; display: grid; grid-template-rows: 1fr auto; }
+
+    main {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 24px 40px; gap: 0;
+    }
+
+    .clock-ring { width: 120px; height: 120px; margin-bottom: 40px; position: relative; animation: ring-enter .8s cubic-bezier(.34,1.56,.64,1) both; }
+    .clock-ring svg { width: 100%; height: 100%; }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+    .ring-fill  { fill: none; stroke: url(#rg); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+    .ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
+    @keyframes ring-enter { from { opacity: 0; transform: scale(.7) rotate(-45deg); } to { opacity: 1; transform: scale(1); } }
+
+    .headline { font-family: 'DM Serif Display', serif; font-size: clamp(48px,8vw,80px); line-height: .95; text-align: center; margin-bottom: 10px; background: linear-gradient(135deg, var(--text) 0%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: fade-up .6s .2s ease both; }
+
+    .site-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 100px; background: var(--surface); border: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); margin-bottom: 40px; animation: fade-up .6s .35s ease both; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .site-chip::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+
+    .stats { display: flex; gap: 16px; margin-bottom: 44px; animation: fade-up .6s .45s ease both; flex-wrap: wrap; justify-content: center; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 28px; text-align: center; min-width: 130px; }
+    .stat-val { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; margin-bottom: 4px; }
+    .stat-val.used  { color: var(--danger); }
+    .stat-val.limit { color: var(--accent); }
+    .stat-val.over  { color: var(--good); }
+    .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    .progress-wrap { width: min(440px,90vw); margin-bottom: 44px; animation: fade-up .6s .55s ease both; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .progress-bg   { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--danger)); transition: width 1.2s cubic-bezier(.4,0,.2,1); width: 0%; }
+
+    .quote-block { max-width: 420px; text-align: center; margin-bottom: 40px; animation: fade-up .6s .65s ease both; }
+    .quote-text   { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 18px; line-height: 1.55; color: var(--muted); margin-bottom: 8px; }
+    .quote-author { font-size: 12px; color: #45475a; }
+
+    .cta { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: fade-up .6s .75s ease both; }
+    .cta-note { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; max-width: 380px; }
+    .cta-note kbd { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+    .btn-back { padding: 11px 28px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: opacity .15s, transform .15s; font-family: 'DM Sans', sans-serif; }
+    .btn-back:hover { opacity: .85; transform: translateY(-2px); }
+
+    footer { position: relative; z-index: 1; text-align: center; padding: 16px; font-size: 11px; color: #2a2a40; }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 500px) {
+      .stats { gap: 10px; }
+      .stat-card { padding: 14px 20px; min-width: 110px; }
+      .stat-val { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <main>
+    <div class="clock-ring">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#7c6af7"/>
+            <stop offset="100%" stop-color="#f87171"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="50" cy="50" r="45"/>
+        <circle class="ring-fill"  cx="50" cy="50" r="45" id="ringFill"/>
+      </svg>
+      <div class="ring-center" id="ringPct">—</div>
+    </div>
+
+    <h1 class="headline">Time's&nbsp;Up.</h1>
+    <div class="site-chip" id="siteChip">Loading…</div>
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-val used"  id="statUsed">—</div><div class="stat-lbl">Minutes used</div></div>
+      <div class="stat-card"><div class="stat-val limit" id="statLimit">—</div><div class="stat-lbl">Daily limit</div></div>
+      <div class="stat-card"><div class="stat-val over"  id="statOver">—</div><div class="stat-lbl">Over by</div></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>0 min</span><span id="limitLabel">— min limit</span></div>
+      <div class="progress-bg"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="quote-block">
+      <div class="quote-text"  id="quoteText"></div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <div class="cta">
+      <div class="cta-note">
+        To apply for more time, open the <kbd>⏱</kbd> button in the corner on any page,
+        go to <kbd>📅 Calendar</kbd>, and request a higher quota for
+        <strong>tomorrow or later</strong>.
+      </div>
+      <a class="btn-back" id="btnBack" href="#">↩ Go back</a>
+    </div>
+  </main>
+
+  <footer>Site Time Limiter — take a break, you've earned it.</footer>
+</div>
+
+<script>
+  /* ──────────────────────────────────────────────────────────────────
+     FIX: Sanitize the 'site' URL parameter before using it in any
+     navigation context to prevent an open-redirect attack.
+     Previously: `window.location.href = 'https://' + site` where
+     site was the raw, unvalidated URL param value.
+     Now: only a clean hostname (letters, digits, dots, hyphens) is
+     accepted; anything else falls back to a safe no-op.
+  ────────────────────────────────────────────────────────────────── */
+  function sanitizeHostname(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    // Strip any accidental protocol or path the attacker might inject
+    const stripped = raw.replace(/^https?:\/\//i, '').split('/')[0].split('?')[0];
+    // Allow only valid hostname characters; reject IP literals with ports, etc.
+    return /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/.test(stripped)
+      ? stripped
+      : null;
+  }
+
+  const params    = new URLSearchParams(location.search);
+  const rawSite   = params.get('site') || '';
+  const safeHost  = sanitizeHostname(rawSite); // null if invalid
+  const siteName  = safeHost || 'the website'; // display label only
+
+  const used  = Math.max(0, parseInt(params.get('used'))  || 0); // minutes
+  const limit = Math.max(1, parseInt(params.get('limit')) || 60); // minutes
+  const over  = Math.max(0, used - limit);
+  const pct   = Math.min(100, Math.round(used / limit * 100));
+
+  // Populate stats using textContent (never innerHTML) to prevent XSS
+  document.getElementById('siteChip').textContent   = siteName;
+  document.getElementById('statUsed').textContent   = used;
+  document.getElementById('statLimit').textContent  = limit;
+  document.getElementById('statOver').textContent   = over;
+  document.getElementById('limitLabel').textContent = `${limit} min limit`;
+
+  // Animate progress bar
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.getElementById('progressFill').style.width = pct + '%';
+    }, 200);
+  });
+
+  // Animate clock ring
+  const circumference = 2 * Math.PI * 45; // ≈ 283
+  const ringFill = document.getElementById('ringFill');
+  ringFill.style.strokeDasharray  = circumference;
+  ringFill.style.strokeDashoffset = circumference;
+  document.getElementById('ringPct').textContent = pct + '%';
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      ringFill.style.strokeDashoffset = circumference * (1 - Math.min(1, pct / 100));
+    }, 300);
+  });
+
+  // Back button: prefer history.back(); fall back only to validated safeHost
+  document.getElementById('btnBack').addEventListener('click', e => {
+    e.preventDefault();
+    if (document.referrer) {
+      history.back();
+    } else if (safeHost) {
+      // safeHost is validated: no protocol injection, no path injection
+      window.location.href = 'https://' + safeHost;
+    }
+    // If safeHost is null (invalid param), do nothing — safe no-op
+  });
+
+  // Quote selection (deterministic per site for consistency)
+  const QUOTES = [
+    { text: "Almost everything will work again if you unplug it for a few minutes — including you.", author: "Anne Lamott" },
+    { text: "The time you enjoy wasting is not wasted time.", author: "Bertrand Russell" },
+    { text: "Rest is not idleness, and to lie sometimes on the grass under trees is by no means a waste of time.", author: "John Lubbock" },
+    { text: "Your mind needs rest as much as your body.", author: "— " },
+    { text: "Nature does not hurry, yet everything is accomplished.", author: "Lao Tzu" },
+    { text: "Take a break. Your best ideas come when you're not staring at a screen.", author: "— " },
+    { text: "Beware the barrenness of a busy life.", author: "Socrates" },
+    { text: "In the middle of difficulty lies opportunity — and usually some snacks.", author: "— " },
+  ];
+  const q = QUOTES[siteName.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % QUOTES.length];
+  document.getElementById('quoteText').textContent   = '\u201C' + q.text + '\u201D';
+  document.getElementById('quoteAuthor').textContent = q.author;
+</script>
+</body>
+</html>
